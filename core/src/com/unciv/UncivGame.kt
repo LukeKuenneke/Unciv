@@ -120,7 +120,7 @@ class UncivGame(
     fun loadGame(gameInfo:GameInfo){
         this.gameInfo = gameInfo
         ImageGetter.ruleset = gameInfo.ruleSet
-        ImageGetter.refreshAtlas()
+        ImageGetter.refreshAltas()
         worldScreen = WorldScreen(gameInfo.getPlayerToViewAs())
         setWorldScreen()
     }
@@ -144,7 +144,7 @@ class UncivGame(
     override fun resume() {
         super.resume()
         if(!isInitialized) return // The stuff from Create() is still happening, so the main screen will load eventually
-        ImageGetter.refreshAtlas()
+        ImageGetter.refreshAltas()
 
         // This is to solve a rare problem -
         // Sometimes, resume() is called and the gameInfo doesn't have any civilizations.

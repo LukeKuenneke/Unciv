@@ -45,14 +45,14 @@ class WorkerAutomation(val unit: MapUnit) {
 
         val citiesToNumberOfUnimprovedTiles = HashMap<String, Int>()
         for (city in unit.civInfo.cities) {
-            citiesToNumberOfUnimprovedTiles[city.id] =
+            citiesToNumberOfUnimprovedTiles[city.name] =
                     city.getTiles().count { it.isLand && it.civilianUnit == null
                             && tileCanBeImproved(it, unit.civInfo) }
         }
 
         val mostUndevelopedCity = unit.civInfo.cities
-                .filter { citiesToNumberOfUnimprovedTiles[it.id]!! > 0 }
-                .sortedByDescending { citiesToNumberOfUnimprovedTiles[it.id] }
+                .filter { citiesToNumberOfUnimprovedTiles[it.name]!! > 0 }
+                .sortedByDescending { citiesToNumberOfUnimprovedTiles[it.name] }
                 .firstOrNull { unit.movement.canReach(it.getCenterTile()) } //goto most undeveloped city
         if (mostUndevelopedCity != null && mostUndevelopedCity != unit.currentTile.owningCity) {
             val reachedTile = unit.movement.headTowards(mostUndevelopedCity.getCenterTile())

@@ -223,8 +223,6 @@ class Building : NamedStats(), IConstruction{
 
     fun getRejectionReason(construction: CityConstructions):String{
         if (construction.isBuilt(name)) return "Already built"
-        if (construction.isBeingConstructed(name)) return "Is being built"
-        if (construction.isEnqueued(name)) return "Already enqueued"
 
         if ("Must be next to desert" in uniques
                 && !construction.cityInfo.getCenterTile().getTilesInDistance(1).any { it.baseTerrain == Constants.desert })
@@ -258,7 +256,7 @@ class Building : NamedStats(), IConstruction{
 
         // Regular wonders
         if (isWonder){
-            if(civInfo.gameInfo.getCities()
+            if(civInfo.gameInfo.civilizations.flatMap { it.cities }
                             .any {it.cityConstructions.isBuilt(name)})
                 return "Wonder is already built"
 

@@ -1,6 +1,7 @@
 package com.unciv.ui.cityscreen
 
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton
 import com.unciv.UncivGame
@@ -8,7 +9,10 @@ import com.unciv.logic.city.CityInfo
 import com.unciv.logic.map.TileInfo
 import com.unciv.models.UncivSound
 import com.unciv.models.translations.tr
-import com.unciv.ui.utils.*
+import com.unciv.ui.utils.CameraStageBaseScreen
+import com.unciv.ui.utils.ImageGetter
+import com.unciv.ui.utils.disable
+import com.unciv.ui.utils.onClick
 
 class CityScreenTileTable(val city: CityInfo): Table(){
     val innerTable = Table()
@@ -30,20 +34,19 @@ class CityScreenTileTable(val city: CityInfo): Table(){
         val stats = selectedTile.getTileStats(city, city.civInfo)
         innerTable.pad(20f)
 
-        innerTable.add(selectedTile.toString().toLabel()).colspan(2)
+        innerTable.add(Label(selectedTile.toString(), CameraStageBaseScreen.skin)).colspan(2)
         innerTable.row()
 
         val statsTable = Table()
         statsTable.defaults().pad(2f)
         for (entry in stats.toHashMap().filterNot { it.value==0f }) {
             statsTable.add(ImageGetter.getStatIcon(entry.key.toString())).size(20f)
-            statsTable.add(Math.round(entry.value).toString().toLabel())
+            statsTable.add(Label(Math.round(entry.value).toString(), CameraStageBaseScreen.skin))
             statsTable.row()
         }
         innerTable.add(statsTable).row()
 
-        if(selectedTile.getOwner()==null && selectedTile.neighbors.any {it.getCity()==city}
-            && selectedTile in city.tilesInRange){
+        if(selectedTile.getOwner()==null && selectedTile.neighbors.any {it.getCity()==city}){
             val goldCostOfTile = city.expansion.getGoldCostOfTile(selectedTile)
 
             val buyTileButton = TextButton("Buy for [$goldCostOfTile] gold".tr(), CameraStageBaseScreen.skin)

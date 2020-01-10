@@ -15,7 +15,6 @@ import com.unciv.models.ruleset.tile.TerrainType
 import com.unciv.models.ruleset.unit.BaseUnit
 import com.unciv.models.ruleset.unit.UnitType
 import java.text.DecimalFormat
-import kotlin.random.Random
 
 class MapUnit {
 
@@ -63,12 +62,6 @@ class MapUnit {
     var attacksThisTurn = 0
     var promotions = UnitPromotions()
     var due: Boolean = true
-
-    companion object {
-        private const val ANCIENT_RUIN_MAP_REVEAL_OFFSET = 4
-        private const val ANCIENT_RUIN_MAP_REVEAL_RANGE = 4
-        private const val ANCIENT_RUIN_MAP_REVEAL_CHANCE = 0.8f
-    }
 
     //region pure functions
     fun clone(): MapUnit {
@@ -456,14 +449,10 @@ class MapUnit {
     }
 
     private fun clearEncampment(tile: TileInfo) {
-        tile.improvement = null
-
-        var goldGained = civInfo.getDifficulty().clearBarbarianCampReward * civInfo.gameInfo.gameParameters.gameSpeed.getModifier()
-        if (civInfo.nation.unique == "Receive triple Gold from Barbarian encampments and pillaging Cities. Embarked units can defend themselves.")
-            goldGained *= 3f
-
-        civInfo.gold += goldGained.toInt()
-        civInfo.addNotification("We have captured a barbarian encampment and recovered [${goldGained.toInt()}] gold!", tile.position, Color.RED)
+        tile.improvement=null
+        val goldToAdd = 25 // game-speed-dependant
+        civInfo.gold+=goldToAdd
+        civInfo.addNotification("We have captured a barbarian encampment and recovered [$goldToAdd] gold!", tile.position, Color.RED)
     }
 
     fun disband(){
@@ -512,17 +501,6 @@ class MapUnit {
             val amount = listOf(25,60,100).random()
             civInfo.gold+=amount
             civInfo.addNotification("We have found a stash of [$amount] gold in the ruins!",tile.position, Color.GOLD)
-        }
-
-        // Map of the surrounding area
-        actions.add {
-            val revealCenter = tile.getTilesAtDistance(ANCIENT_RUIN_MAP_REVEAL_OFFSET).random()
-            val tilesToReveal = revealCenter
-                .getTilesInDistance(ANCIENT_RUIN_MAP_REVEAL_RANGE)
-                .filter { Random.nextFloat() < ANCIENT_RUIN_MAP_REVEAL_CHANCE }
-                .map { it.position }
-            civInfo.exploredTiles.addAll(tilesToReveal)
-            civInfo.addNotification("We have found a crudely-drawn map in the ruins!", tile.position, Color.RED)
         }
 
         (actions.random())()

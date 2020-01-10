@@ -10,7 +10,6 @@ import com.unciv.logic.map.RoadStatus
 import com.unciv.logic.map.TileInfo
 import com.unciv.models.UncivSound
 import com.unciv.models.UnitAction
-import com.unciv.models.UnitActionType
 import com.unciv.models.ruleset.Building
 import com.unciv.models.translations.tr
 import com.unciv.ui.pickerscreens.ImprovementPickerScreen
@@ -27,19 +26,18 @@ class UnitActions {
 
         if (unit.action != null && unit.action!!.startsWith("moveTo")) {
             actionList += UnitAction(
-                    type = UnitActionType.StopMovement,
+                    name = "Stop movement",
                     canAct = true,
                     action = { unit.action = null }
             )
         }
 
-        val workingOnImprovement = unit.hasUnique("Can build improvements on tiles")
-                                   && unit.currentTile.hasImprovementInProgress()
+        val workingOnImprovement = unit.hasUnique("Can build improvements on tiles") && unit.currentTile.hasImprovementInProgress()
         if (!unit.isFortified() && (!unit.canFortify() || unit.health < 100) && unit.currentMovement > 0
             && !workingOnImprovement) {
             val isSleeping = unit.action == Constants.unitActionSleep
             actionList += UnitAction(
-                    type = UnitActionType.Sleep,
+                    name = "Sleep",
                     canAct = !isSleeping,
                     isCurrentAction = isSleeping,
                     action = {
@@ -50,7 +48,7 @@ class UnitActions {
 
         if (unit.canFortify()) {
             actionList += UnitAction(
-                    type = UnitActionType.Fortify,
+                    name = "Fortify",
                     canAct = unit.currentMovement > 0,
                     uncivSound = UncivSound.Fortify,
                     action = {
@@ -59,7 +57,7 @@ class UnitActions {
                     })
         } else if (unit.isFortified()) {
             actionList += UnitAction(
-                    type = UnitActionType.Fortify,
+                    name = "Fortify",
                     canAct = false,
                     isCurrentAction = true,
                     title = "${"Fortification".tr()} ${unit.getFortificationTurns() * 20}%"
@@ -69,7 +67,7 @@ class UnitActions {
         if (!unit.type.isAirUnit()) {
             if (unit.action != Constants.unitActionExplore) {
                 actionList += UnitAction(
-                        type = UnitActionType.Explore,
+                        name = "Explore",
                         canAct = true,
                         action = {
                             UnitAutomation().automatedExplore(unit)
@@ -77,7 +75,7 @@ class UnitActions {
                         })
             } else {
                 actionList += UnitAction(
-                        type = UnitActionType.StopExploration,
+                        name = "Stop exploration",
                         canAct = true,
                         action = { unit.action = null }
                 )
@@ -87,7 +85,7 @@ class UnitActions {
         if (!unit.type.isCivilian() && unit.promotions.canBePromoted()) {
             // promotion does not consume movement points, so we can do it always
             actionList += UnitAction(
-                    type = UnitActionType.Promote,
+                    name = "Promote",
                     canAct = true,
                     uncivSound = UncivSound.Promote,
                     action = {
@@ -101,8 +99,7 @@ class UnitActions {
                 val upgradedUnit = unit.getUnitToUpgradeTo()
 
                 actionList += UnitAction(
-                        type = UnitActionType.Upgrade,
-                        title = "Upgrade to [${upgradedUnit.name}] ([$goldCostOfUpgrade] gold)",
+                        name = "Upgrade to [${upgradedUnit.name}] ([$goldCostOfUpgrade] gold)",
                         canAct = unit.civInfo.gold >= goldCostOfUpgrade && !unit.isEmbarked() && unit.currentMovement == unit.getMaxMovement().toFloat(),
                         uncivSound = UncivSound.Upgrade,
                         action = {
@@ -126,26 +123,24 @@ class UnitActions {
         }
 
         if (!unit.type.isCivilian() && tile.improvement != null) {
-            actionList += UnitAction(
-                    type = UnitActionType.Pillage,
-                    canAct = unit.currentMovement > 0 && canPillage(unit, tile),
-                    action = {
-                        // http://well-of-souls.com/civ/civ5_improvements.html says that naval improvements are destroyed upon pilllage
-                        //    and I can't find any other sources so I'll go with that
-                        if (tile.isLand) {
-                            tile.improvementInProgress = tile.improvement
-                            tile.turnsToImprovement = 2
-                        }
-                        tile.improvement = null
-                        if (!unit.hasUnique("No movement cost to pillage")) unit.useMovementPoints(1f)
-                        unit.healBy(25)
-                    })
+            actionList += UnitAction("Pillage", unit.currentMovement > 0 && canPillage(unit, tile))
+            {
+                // http://well-of-souls.com/civ/civ5_improvements.html says that naval improvements are destroyed upon pilllage
+                //    and I can't find any other sources so I'll go with that
+                if (tile.isLand) {
+                    tile.improvementInProgress = tile.improvement
+                    tile.turnsToImprovement = 2
+                }
+                tile.improvement = null
+                if (!unit.hasUnique("No movement cost to pillage")) unit.useMovementPoints(1f)
+                unit.healBy(25)
+            }
         }
 
         if (unit.hasUnique("Must set up to ranged attack") && !unit.isEmbarked()) {
             val setUp = unit.action == "Set Up"
             actionList += UnitAction(
-                    type = UnitActionType.SetUp,
+                    name = "Set up",
                     canAct = unit.currentMovement > 0 && !setUp,
                     isCurrentAction = setUp,
                     uncivSound = UncivSound.Setup,
@@ -157,7 +152,7 @@ class UnitActions {
 
         if (unit.hasUnique("Founds a new city") && !unit.isEmbarked()) {
             actionList += UnitAction(
-                    type = UnitActionType.FoundCity,
+                    name = "Found city",
                     canAct = unit.currentMovement > 0 && !tile.getTilesInDistance(3).any { it.isCityCenter() },
                     uncivSound = UncivSound.Chimes,
                     action = {
@@ -170,7 +165,7 @@ class UnitActions {
 
         if (unit.hasUnique("Can build improvements on tiles") && !unit.isEmbarked()) {
             actionList += UnitAction(
-                    type = UnitActionType.ConstructImprovement,
+                    name = "Construct improvement",
                     canAct = unit.currentMovement > 0
                              && !tile.isCityCenter()
                              && unit.civInfo.gameInfo.ruleSet.tileImprovements.values.any { tile.canBuildImprovement(it, unit.civInfo) },
@@ -181,13 +176,13 @@ class UnitActions {
 
             if (Constants.unitActionAutomation == unit.action) {
                 actionList += UnitAction(
-                        type = UnitActionType.StopAutomation,
+                        name = "Stop automation", 
                         canAct = true,
                         action = { unit.action = null }
                 )
             } else {
                 actionList += UnitAction(
-                        type = UnitActionType.Automate,
+                        name = "Automate",
                         canAct = unit.currentMovement > 0,
                         action = {
                             unit.action = Constants.unitActionAutomation
@@ -201,13 +196,10 @@ class UnitActions {
             && tile.improvementInProgress != "Road"
             && tile.isLand
             && unit.civInfo.tech.isResearched(RoadStatus.Road.improvement(unit.civInfo.gameInfo.ruleSet)!!.techRequired!!))
-            actionList += UnitAction(
-                    type = UnitActionType.ConstructRoad,
-                    canAct = unit.currentMovement > 0,
-                    action = {
-                        tile.improvementInProgress = "Road"
-                        tile.turnsToImprovement = 4
-                    })
+            actionList += UnitAction("Construct road", unit.currentMovement > 0) {
+                tile.improvementInProgress = "Road"
+                tile.turnsToImprovement = 4
+            }
 
         for (improvement in listOf("Fishing Boats", "Oil well")) {
             if (unit.hasUnique("May create improvements on water resources") && tile.resource != null
@@ -217,8 +209,7 @@ class UnitActions {
                 && unit.civInfo.tech.isResearched(unit.civInfo.gameInfo.ruleSet.tileImprovements[improvement]!!.techRequired!!)
             )
                 actionList += UnitAction(
-                        type = UnitActionType.Create,
-                        title = "Create [$improvement]",
+                        name = "Create [$improvement]",
                         canAct = unit.currentMovement > 0,
                         action = {
                             tile.improvement = improvement
@@ -229,8 +220,7 @@ class UnitActions {
         for (unique in unit.getUniques().filter { it.startsWith("Can build improvement: ") }) {
             val improvementName = unique.replace("Can build improvement: ", "")
             actionList += UnitAction(
-                    type = UnitActionType.Create,
-                    title = "Create [$improvementName]",
+                    name = "Create [$improvementName]",
                     canAct = unit.currentMovement > 0f && !tile.isWater && !tile.isCityCenter() && !tile.getLastTerrain().unbuildable,
                     uncivSound = UncivSound.Chimes,
                     action = {
@@ -245,7 +235,7 @@ class UnitActions {
 
         if (unit.name == "Great Scientist" && !unit.isEmbarked()) {
             actionList += UnitAction(
-                    type = UnitActionType.HurryResearch,
+                    name = "Hurry Research",
                     canAct = unit.civInfo.tech.currentTechnologyName() != null && unit.currentMovement > 0,
                     uncivSound = UncivSound.Chimes,
                     action = {
@@ -256,7 +246,7 @@ class UnitActions {
 
         if (unit.hasUnique("Can start an 8-turn golden age") && !unit.isEmbarked()) {
             actionList += UnitAction(
-                    type = UnitActionType.StartGoldenAge,
+                    name = "Start Golden Age",
                     canAct = unit.currentMovement > 0,
                     uncivSound = UncivSound.Chimes,
                     action = {
@@ -273,7 +263,7 @@ class UnitActions {
                 else currentConstruction.isWonder || currentConstruction.isNationalWonder
             }
             actionList += UnitAction(
-                    type = UnitActionType.HurryWonder,
+                    name = "Hurry Wonder",
                     canAct = canHurryWonder,
                     uncivSound = UncivSound.Chimes,
                     action = {
@@ -290,7 +280,7 @@ class UnitActions {
                                          && tile.owningCity?.civInfo?.isAtWarWith(unit.civInfo) == false
                                          && unit.currentMovement > 0
             actionList += UnitAction(
-                    type = UnitActionType.ConductTradeMission,
+                    name = "Conduct Trade Mission",
                     canAct = canConductTradeMission,
                     uncivSound = UncivSound.Chimes,
                     action = {
@@ -308,7 +298,7 @@ class UnitActions {
         }
 
         actionList += UnitAction(
-                type = UnitActionType.DisbandUnit,
+                name = "Disband unit",
                 canAct = unit.currentMovement > 0,
                 action = {
                     val disbandText = if (unit.currentTile.getOwner() == unit.civInfo)

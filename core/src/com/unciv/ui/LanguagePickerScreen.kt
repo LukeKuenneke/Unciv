@@ -2,6 +2,7 @@ package com.unciv.ui
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.scenes.scene2d.Touchable
+import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.unciv.UncivGame
 import com.unciv.models.translations.tr
@@ -46,12 +47,12 @@ class LanguagePickerScreen: PickerScreen(){
 
     init {
         closeButton.isVisible = false
-        val translationDisclaimer = "Please note that translations are a " +
-                "community-based work in progress and are INCOMPLETE! \n" +
-                "The percentage shown is how much of the language is translated in-game.\n" +
-                "If you want to help translating the game into your language, \n"+
-                "  instructions are in the Github readme! (Menu > Community > Github)"
-        topTable.add(translationDisclaimer.toLabel()).pad(10f).row()
+        topTable.add(Label(
+                "Please note that translations are a " +
+                    "community-based work in progress and are INCOMPLETE! \n" +
+                    "The percentage shown is how much of the language is translated in-game.\n" +
+                    "If you want to help translating the game into your language, \n"+
+                    "  instructions are in the Github readme! (Menu > Community > Github)",skin)).pad(10f).row()
 
         val languageCompletionPercentage = UncivGame.Current.translations
                 .percentCompleteOfLanguages
